@@ -22,13 +22,13 @@ import (
 
 const (
 	// TableFabric is the table for storing switch and pod ids
-	TableFabric = "pluginACIFabric"
+	TableFabric = "ACIFabric"
 	// TableSwitch is the table for storing switch information
-	TableSwitch = "pluginACISwitch"
+	TableSwitch = "ACISwitch"
 	// TableSwitchPorts is the table for storing ports of each switch
-	TableSwitchPorts = "pluginACISwitchPorts"
+	TableSwitchPorts = "ACISwitchPorts"
 	// TablePort is the table for storing port information
-	TablePort = "pluginACIPort"
+	TablePort = "ACIPort"
 )
 
 // Fabric ACI holds data of switch id and pod id

@@ -13,3 +13,26 @@
 // under the License.
 
 package db
+
+import (
+	"context"
+	"fmt"
+)
+
+var ctx = context.Background()
+
+// Create will create a new entry in DB for the value with the given table and key
+func (c *Client) Create(table, key string, data interface{}) (err error) {
+	err = c.pool.SetNX(ctx, generateKey(table, key), data, 0).Err()
+	if err != nil {
+		return fmt.Errorf(
+			"Creating new entry for value %v in table %s with key %s failed: %v",
+			data, table, key, err,
+		)
+	}
+	return
+}
+
+func generateKey(table, key string) string {
+	return fmt.Sprintf("%s:%s", table, key)
+}
