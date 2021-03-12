@@ -21,12 +21,12 @@ import (
 	"github.com/go-redis/redis"
 )
 
+// Using below variables as part of errors will enabling errors.Is() function
 var (
-	// ctx = context.Background()
-
-	// ErrorNotFound is for identifing not found error
-	// Using this will enabling errors.Is() function
-	ErrorNotFound = errors.New("Not Found in DB")
+	// ErrorKeyAlreadyExist is for identifing already exist error
+	ErrorKeyAlreadyExist = errors.New("Key already exist in DB")
+	// ErrorKeyNotFound is for identifing not found error
+	ErrorKeyNotFound = errors.New("Key not Found in DB")
 )
 
 // Create will create a new entry in DB for the value with the given table and key
@@ -35,14 +35,22 @@ func (c *Client) Create(table, key string, data interface{}) (err error) {
 	if err != nil {
 		return fmt.Errorf("while marshalling data, got: %v", err)
 	}
-	err = c.pool.SetNX(generateKey(table, key), string(dataByte), 0).Err()
-	if err != nil {
+	ok, err := c.pool.SetNX(generateKey(table, key), string(dataByte), 0).Result()
+	switch {
+	case !ok:
+		return fmt.Errorf(
+			"%w: %s",
+			ErrorKeyAlreadyExist,
+			fmt.Sprintf("An entry with key %s is already present in table %s", key, table),
+		)
+	case err != nil:
 		return fmt.Errorf(
 			"Creating new entry for value %v in table %s with key %s failed: %v",
 			data, table, key, err,
 		)
+	default:
+		return nil
 	}
-	return
 }
 
 // GetAllKeys will collect all the keys of provided table
@@ -70,7 +78,7 @@ func (c *Client) Get(table, key string) (val string, err error) {
 	case redis.Nil:
 		return "", fmt.Errorf(
 			"%w: %s",
-			ErrorNotFound,
+			ErrorKeyNotFound,
 			fmt.Sprintf("Data with key %s not found in table %s", key, table),
 		)
 	case nil:
