@@ -17,9 +17,18 @@ package db
 import (
 	"context"
 	"fmt"
+	"errors"
+
+	"github.com/go-redis/redis"
 )
 
-var ctx = context.Background()
+var (
+	ctx = context.Background()
+
+	// ErrorNotFound is for identifing not found error
+	// Using this will enabling errors.Is() function
+	ErrorNotFound = errors.New("Not Found in DB")
+)
 
 // Create will create a new entry in DB for the value with the given table and key
 func (c *Client) Create(table, key string, data interface{}) (err error) {
@@ -31,6 +40,41 @@ func (c *Client) Create(table, key string, data interface{}) (err error) {
 		)
 	}
 	return
+}
+
+// GetAllKeys will collect all the keys of provided table
+func (c *Client) GetAllKeys(table string) (allKeys *[]string, err error) {
+	var cursor uint64
+	for {
+		var keys []string
+		var err error
+		keys, cursor, err = c.pool.Scan(ctx, cursor, generateKey(table, "*"), 100).Result()
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch all keys of table %s: %s", table, err.Error())
+		}
+		*allKeys = append(*allKeys, keys...)
+		if cursor == 0 {
+			break
+		}
+	}
+	return
+}
+
+// Get will collect the data associated with the given key from the given table
+func (c *Client) Get(table, key string) (val string, err error){
+	val, err = c.pool.Get(ctx, generateKey(table, key)).Result()
+	switch err {
+	case redis.Nil:
+		return "", fmt.Errorf(
+			"%w: %s",
+			ErrorNotFound,
+			fmt.Sprintf("Data with key %s not found in table %s", key, table),
+		)
+	case nil:
+		return val, nil
+	default:
+		return "", fmt.Errorf("unable to complete the operation: %s", err.Error())
+	}
 }
 
 func generateKey(table, key string) string {
