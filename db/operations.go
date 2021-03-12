@@ -15,15 +15,14 @@
 package db
 
 import (
-	"context"
-	"fmt"
 	"errors"
+	"fmt"
 
 	"github.com/go-redis/redis"
 )
 
 var (
-	ctx = context.Background()
+	// ctx = context.Background()
 
 	// ErrorNotFound is for identifing not found error
 	// Using this will enabling errors.Is() function
@@ -32,7 +31,7 @@ var (
 
 // Create will create a new entry in DB for the value with the given table and key
 func (c *Client) Create(table, key string, data interface{}) (err error) {
-	err = c.pool.SetNX(ctx, generateKey(table, key), data, 0).Err()
+	err = c.pool.SetNX(generateKey(table, key), data, 0).Err()
 	if err != nil {
 		return fmt.Errorf(
 			"Creating new entry for value %v in table %s with key %s failed: %v",
@@ -48,7 +47,7 @@ func (c *Client) GetAllKeys(table string) (allKeys *[]string, err error) {
 	for {
 		var keys []string
 		var err error
-		keys, cursor, err = c.pool.Scan(ctx, cursor, generateKey(table, "*"), 100).Result()
+		keys, cursor, err = c.pool.Scan(cursor, generateKey(table, "*"), 100).Result()
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all keys of table %s: %s", table, err.Error())
 		}
@@ -61,8 +60,8 @@ func (c *Client) GetAllKeys(table string) (allKeys *[]string, err error) {
 }
 
 // Get will collect the data associated with the given key from the given table
-func (c *Client) Get(table, key string) (val string, err error){
-	val, err = c.pool.Get(ctx, generateKey(table, key)).Result()
+func (c *Client) Get(table, key string) (val string, err error) {
+	val, err = c.pool.Get(generateKey(table, key)).Result()
 	switch err {
 	case redis.Nil:
 		return "", fmt.Errorf(

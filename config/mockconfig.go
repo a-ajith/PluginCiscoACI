@@ -212,11 +212,11 @@ func SetUpMockConfig(t *testing.T) error {
 
 	Data.DBConf = &DBConf{
 		Protocol:       "tcp",
-		Host:           "ValidHost",
-		Port:           "ValidPort",
-		MinIdleConns:   2,
-		PoolSize:       4,
-		RedisHAEnabled: true,
+		Host:           "localhost",
+		Port:           "6379",
+		MinIdleConns:   8,
+		PoolSize:       10,
+		RedisHAEnabled: false,
 		SentinelPort:   "5678",
 		MasterSet:      "ValidMasterSet",
 	}
