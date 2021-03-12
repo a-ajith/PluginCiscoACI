@@ -54,21 +54,21 @@ func (c *Client) Create(table, key string, data interface{}) (err error) {
 }
 
 // GetAllKeys will collect all the keys of provided table
-func (c *Client) GetAllKeys(table string) (allKeys *[]string, err error) {
+func (c *Client) GetAllKeys(table string) ([]string, error) {
+	var allKeys []string
 	var cursor uint64
 	for {
-		var keys []string
-		var err error
-		keys, cursor, err = c.pool.Scan(cursor, generateKey(table, "*"), 100).Result()
+		keys, c, err := c.pool.Scan(cursor, generateKey(table, "*"), 100).Result()
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all keys of table %s: %s", table, err.Error())
 		}
-		*allKeys = append(*allKeys, keys...)
+		allKeys = append(allKeys, keys...)
 		if cursor == 0 {
 			break
 		}
+		cursor = c
 	}
-	return
+	return allKeys, nil
 }
 
 // Get will collect the data associated with the given key from the given table
